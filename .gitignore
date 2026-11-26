@@ -1,0 +1,28 @@
+# Rust build artifacts
+target/
+
+# Lean 4 build artifacts
+formal/.lake/
+
+# Datasets, ephemerides, local caches, and toolchains
+data/
+.tmp/
+.cache/
+.toolchain/
+verification/reports/
+**/__pycache__/
+*.pyc
+
+# FITS & astronomical data products
+*.fits
+*.evt
+*.evn
+*.pha
+*.lc
+*.rsp
+*.orb
+
+# Archives
+*.tar
+*.tar.gz
+*.zip

@@ -1,0 +1,20 @@
+[package]
+name = "astrosat-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+astrosat-fits.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+rayon.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

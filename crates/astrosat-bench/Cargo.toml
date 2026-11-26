@@ -1,0 +1,22 @@
+[package]
+name = "astrosat-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+astrosat-fits.workspace = true
+astrosat-core.workspace = true
+astrosat-czti.workspace = true
+astrosat-laxpc.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+tempfile.workspace = true

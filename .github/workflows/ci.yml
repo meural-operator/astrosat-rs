@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust Clippy, Test & Release Binary Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache Cargo registry & build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Clippy (strict, zero warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Test workspace
+        run: cargo test --workspace
+
+      - name: Build release CLI binary
+        run: cargo build --release -p astrosat-cli
+
+      - name: Verify zero external C/Fortran scientific dependencies
+        run: |
+          LDD_OUT="$(ldd target/release/astrosat)"
+          echo "$LDD_OUT"
+          if echo "$LDD_OUT" | grep -qiE 'cfitsio|heasoft|gfortran|glog|pil|openssl|libssl|libcrypto'; then
+            echo "ERROR: Unexpected external C/Fortran/OpenSSL runtime dependency detected!" >&2
+            exit 1
+          fi
+
+      - name: Smoke-test CLI help
+        run: |
+          ./target/release/astrosat --help
+          ./target/release/astrosat czti --help
+          ./target/release/astrosat laxpc --help
+          ./target/release/astrosat bary --help
+          ./target/release/astrosat inspect --help
+          ./target/release/astrosat validate --help
+          ./target/release/astrosat timing --help
+
+  lean:
+    name: Lean 4 Formal Proofs (126 Theorems, 0 sorry)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install elan & Lean 4 toolchain
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Build AstrosatFormal
+        working-directory: formal
+        run: |
+          lean --version
+          lake build
+
+      - name: Audit zero sorry and zero custom axioms
+        working-directory: formal
+        run: |
+          if grep -rnE '\bsorry\b|\baxiom ' AstrosatFormal/ AstrosatFormal.lean; then
+            echo "ERROR: Found sorry or custom axiom in Lean 4 formal proofs!" >&2
+            exit 1
+          fi
+          echo "PASS: 0 sorry, 0 custom axioms."

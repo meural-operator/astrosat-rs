@@ -1,0 +1,45 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/astrosat-fits",
+    "crates/astrosat-core",
+    "crates/astrosat-czti",
+    "crates/astrosat-laxpc",
+    "crates/astrosat-cli",
+    "crates/astrosat-bench",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/meural-operator/astrosat-rs"
+homepage = "https://github.com/meural-operator/astrosat-rs#readme"
+description = "High-performance pure-Rust redesign of ISRO AstroSat CZTI & LAXPC L1-to-L2 pipelines and Solar System barycentric correction"
+keywords = ["astronomy", "astrosat", "fits", "czti", "laxpc"]
+categories = ["science", "command-line-utilities"]
+
+[workspace.dependencies]
+astrosat-fits = { path = "crates/astrosat-fits" }
+astrosat-core = { path = "crates/astrosat-core" }
+astrosat-czti = { path = "crates/astrosat-czti" }
+astrosat-laxpc = { path = "crates/astrosat-laxpc" }
+
+rayon = "1.10"
+memmap2 = "0.9"
+thiserror = "2.0"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+rustfft = "6.2"
+num-complex = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tempfile = "3.14"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
