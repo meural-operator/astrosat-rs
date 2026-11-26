@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.png" alt="astrosat-rs — Pure-Rust ISRO AstroSat CZTI &amp; LAXPC Pipelines" width="100%">
+</p>
+
 # `astrosat-rs`
 
 A production-grade, `rayon`-parallelized, **zero-patch pure-Rust** redesign of ISRO AstroSat's **CZTI** (Cadmium Zinc Telluride Imager) and **LAXPC** (Large Area X-ray Proportional Counter) Level-1 to Level-2 scientific pipelines and Solar System Barycentric timing engine, accompanied by **126 machine-checked Lean 4 formal proofs**.
