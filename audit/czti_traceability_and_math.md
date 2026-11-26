@@ -59,7 +59,7 @@ An exhaustive, line-by-line traceability, bit-level, and mathematical verificati
 - **Quadrant Coordinate Transforms (`types.rs:97-145`)**:
   - `dx = det_id % 4`, `dy = det_id / 4`, `px = pix_id % 16`, `py = pix_id / 16`, `(detx, dety) = (16*dx + px, 16*dy + py)`.
   - Quadrant reflections: Q0/Q3 flip `dety = 63 - dety`; Q1/Q2 flip `detx = 63 - detx`.
-  - Full-plane `detxy_to_locxy`: Q0 `(x, 64+y)`, Q1 `(64+x, 64+y)`, Q2 `(64+x, y)`, Q3 `(x, y)`. Bijectivity formally machine-checked across all 16,384 pixels in `AstrosatFormal/Telemetry.lean` and `czti_tests.rs:35-54`. **VERIFIED: `EXACT_MATCH`**.
+  - Full-plane `detxy_to_locxy`: Q0 `(x, 64+y)`, Q1 `(64+x, 64+y)`, Q2 `(64+x, y)`, Q3 `(x, y)`. Bijectivity exhaustively verified across all 16,384 pixels in `czti_tests.rs:35-54`. **VERIFIED: `EXACT_MATCH`**.
 
 ### 2.2 TCT Time Interpolation (`level1handler.cpp` vs `tct.rs`)
 - Constants (`tct.rs:11-13`): `CZTI_CLOCK_WRAP_SEC = 1_048_576.0` ($2^{20}$), `CZTI_DEFAULT_FEB_LAG = 2.0` s.
@@ -103,7 +103,7 @@ An exhaustive, line-by-line traceability, bit-level, and mathematical verificati
 - **`BKGSCAL` Mask-Weight Renormalization (`bindata.rs:544-644` vs `cztshadowgen.cpp:116-180`)**:
   Per-module (16x16 pixels, requiring `nActPix[ch] > min_npix = 100`) and per PI channel `ch`:
   $$D_{\text{mod}, c} = \frac{\sum_p w_p B_{p,c} T_p}{\sum_p B_{p,c} T_p}, \quad \text{denom}_{\text{mod},c} = \frac{2 \sum f_p^2}{\sum f_p} - (1 + D_{\text{mod}, c}), \quad w_{p,c}' = \frac{w_p - D_{\text{mod}, c}}{\text{denom}_{\text{mod},c}}$$
-  Yields exact background cancellation $\sum_{p \in \text{good}} w'_{p,c} B_{p,c} T_p = 0$ (formally proven in `AstrosatFormal/AstroPhysics.lean`). Spectral variance $\sigma_c = \sqrt{\sum (w'_{p,c})^2}$. Note minor floating-point safety guard `denom[ch] = 1.0` when `d.abs() < 1e-12` (legacy `== 0`). **VERIFIED: `EXACT_MATCH`**.
+  Yields exact background cancellation $\sum_{p \in \text{good}} w'_{p,c} B_{p,c} T_p = 0$. Spectral variance $\sigma_c = \sqrt{\sum (w'_{p,c})^2}$. Note minor floating-point safety guard `denom[ch] = 1.0` when `d.abs() < 1e-12` (legacy `== 0`). **VERIFIED: `EXACT_MATCH`**.
 - **`ADDITIONAL_LLD` Clamp (`bindata.rs:23-43` vs `cztbindata.h:107`, `cztbindata.cpp:1930-1931`)**:
   Enforces noisy-module floors (`Q1: {7,8,9:58, 11:62, 12,13:60, 15:54}`, `Q2: {3:58}`, `Q3: {4,15:50}`) in both `bindata` and `rspgen`. **VERIFIED: `EXACT_MATCH`**.
 - **`cztrspgen` RMF/ARF Weighting, `absco_Ta`, `.pha` `QUALITY`/`GROUPING`, & LC `FRACEXP` (`bindata.rs:653-700, 930-1390` vs `cztrspgen.cpp:441-705`, `Exposure.cpp:956-991`, `cztbindata.cpp:1673-1779`, `level2validation.cpp:4865-5005`)**:

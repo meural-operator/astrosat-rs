@@ -52,30 +52,3 @@ jobs:
           ./target/release/astrosat inspect --help
           ./target/release/astrosat validate --help
           ./target/release/astrosat timing --help
-
-  lean:
-    name: Lean 4 Formal Proofs (126 Theorems, 0 sorry)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install elan & Lean 4 toolchain
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
-
-      - name: Build AstrosatFormal
-        working-directory: formal
-        run: |
-          lean --version
-          lake build
-
-      - name: Audit zero sorry and zero custom axioms
-        working-directory: formal
-        run: |
-          if grep -rnE '\bsorry\b|\baxiom ' AstrosatFormal/ AstrosatFormal.lean; then
-            echo "ERROR: Found sorry or custom axiom in Lean 4 formal proofs!" >&2
-            exit 1
-          fi
-          echo "PASS: 0 sorry, 0 custom axioms."

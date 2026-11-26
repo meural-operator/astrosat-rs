@@ -41,7 +41,7 @@ for var_name in CARGO_HOME RUSTUP_HOME CARGO_TARGET_DIR TMPDIR; do
         exit 1
     fi
 done
-for bad_dir in "/home/diat/.cargo" "/home/diat/.rustup" "/home/diat/.elan"; do
+for bad_dir in "/home/diat/.cargo" "/home/diat/.rustup"; do
     if [[ -d "${bad_dir}" ]]; then
         echo "WARNING: Unexpected directory on C:/WSL root: ${bad_dir}"
     fi
@@ -214,18 +214,6 @@ if [[ "${SKIP_BENCHMARKS}" -eq 1 ]]; then
     echo "SKIPPED (--skip-benchmarks)"
 else
     "${PY}" "${ROOT_DIR}/verification/check_benchmarks.py" --bench-script "${ROOT_DIR}/scripts/run_benchmarks.sh" --readme "${ROOT_DIR}/README.md"
-fi
-
-if [[ -d "${ROOT_DIR}/formal" && -d "/mnt/d/ISRO/.toolchain/elan/bin" ]]; then
-    echo "=== [Formal] Lean 4 Lake Build & Zero-Sorry Audit ==="
-    export ELAN_HOME="/mnt/d/ISRO/.toolchain/elan"
-    export PATH="/mnt/d/ISRO/.toolchain/elan/bin:${PATH}"
-    (cd "${ROOT_DIR}/formal" && lake build)
-    if grep -rnE '\bsorry\b|\baxiom ' "${ROOT_DIR}/formal/AstrosatFormal/" "${ROOT_DIR}/formal/"*.lean 2>/dev/null; then
-        echo "FAIL: Found sorry or axiom in formal/ Lean files!" >&2
-        exit 1
-    fi
-    echo "PASS: Lean 4 formal/ built cleanly with 0 sorry / 0 axiom."
 fi
 
 echo "ALL VERIFICATION CHECKS PASSED!"

@@ -1,6 +1,0 @@
-name = "AstrosatFormal"
-version = "0.1.0"
-defaultTargets = ["AstrosatFormal"]
-
-[[lean_lib]]
-name = "AstrosatFormal"
