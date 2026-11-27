@@ -17,7 +17,7 @@ use clap::{ArgMatches, CommandFactory, FromArgMatches};
 use tracing_subscriber::EnvFilter;
 
 use crate::bary_cmd::{print_bary_human, run_bary};
-use crate::cli::{is_cli_arg, leaf_matches, Cli, TopCommand};
+use crate::cli::{is_cli_arg, leaf_matches, resolve_flag, Cli, TopCommand};
 use crate::config::{load_app_config, AppConfig};
 use crate::czti_cmd::dispatch_czti;
 use crate::inspect::{print_inspect_human, run_inspect};
@@ -162,6 +162,34 @@ fn run(cli: Cli, root_matches: &ArgMatches) -> anyhow::Result<ExitCode> {
             };
             let res = run_timing(&params)?;
             out.emit(&res, print_timing_human)?;
+        }
+        TopCommand::Ui(args) => {
+            let host = if is_cli_arg(leaf, "host") {
+                args.host.clone()
+            } else {
+                app_cfg.ui.host.clone().unwrap_or_else(|| args.host.clone())
+            };
+            let port = if is_cli_arg(leaf, "port") {
+                args.port
+            } else {
+                app_cfg.ui.port.unwrap_or(args.port)
+            };
+            let data_dir = if let Some(dir) = args.data_dir.clone().or_else(|| app_cfg.ui.data_dir.clone()) {
+                if !dir.is_dir() {
+                    anyhow::bail!("--data-dir is not an existing directory: {}", dir.display());
+                }
+                dir
+            } else {
+                std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+            };
+            let open_browser = resolve_flag(leaf, "open", "no_open", app_cfg.ui.open_browser, true);
+            astrosat_ui::serve(astrosat_ui::UiConfig {
+                host,
+                port,
+                data_dir,
+                open_browser,
+                threads: cli.threads.or(app_cfg.threads),
+            })?;
         }
     }
 

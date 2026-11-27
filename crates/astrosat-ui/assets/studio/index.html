@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AstroSat Studio | X-ray Reduction and Timing Workbench</title>
+  <link rel="stylesheet" href="/studio/studio.css" />
+</head>
+<body>
+  <header class="masthead" id="masthead">
+    <div class="masthead-left">
+      <a href="/" class="wordmark" aria-label="AstroSat Studio home">
+        <svg class="wordmark-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="2.6" />
+          <ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(-26 12 12)" />
+          <line x1="12" y1="2.5" x2="12" y2="5.5" />
+          <line x1="12" y1="18.5" x2="12" y2="21.5" />
+        </svg>
+        <span class="wordmark-name">AstroSat</span>
+        <span class="wordmark-edition">Studio</span>
+      </a>
+    </div>
+
+    <nav class="primary-nav" role="tablist" aria-label="Workbench sections">
+      <button class="nav-link active" data-tab="runner" role="tab" aria-selected="true">Pipelines &amp; tools</button>
+      <button class="nav-link" data-tab="lc-spec" role="tab" aria-selected="false">Light curves &amp; spectra</button>
+      <button class="nav-link" data-tab="imaging" role="tab" aria-selected="false">2D imaging</button>
+      <button class="nav-link" data-tab="pulse" role="tab" aria-selected="false">Pulse alignment</button>
+      <button class="nav-link" data-tab="inspector" role="tab" aria-selected="false">FITS inspector</button>
+    </nav>
+
+    <div class="masthead-right">
+      <span id="workspace-meta" class="workspace-meta">Connecting...</span>
+      <button id="theme-toggle" class="ghost-action" type="button" aria-label="Switch color theme">Dark</button>
+      <a href="/classic" class="ghost-action">Classic UI</a>
+    </div>
+  </header>
+
+  <main class="shell">
+    <!-- ================================================================== -->
+    <!-- VIEW 1: PIPELINE RUNNER                                            -->
+    <!-- ================================================================== -->
+    <section id="tab-runner" class="view active" role="tabpanel">
+      <div id="runner-banner" class="notice notice-err hidden" role="alert">
+        <span id="runner-banner-msg"></span>
+        <button type="button" class="text-action" data-dismiss="runner">Dismiss</button>
+      </div>
+
+      <div class="split-workbench">
+        <!-- Left Parameter Sheet -->
+        <div class="pane pane-controls">
+          <div class="section-head">
+            <h1 class="section-title">Pipelines &amp; tools</h1>
+            <div class="inline-actions">
+              <button id="runner-load-toml" type="button" class="text-action">Load TOML</button>
+              <button id="runner-autofill" type="button" class="text-action">Fill sample paths</button>
+            </div>
+          </div>
+
+          <div class="control-row selector-bar">
+            <div class="selector-groups">
+              <div class="selector-group">
+                <span class="selector-label">Pipelines</span>
+                <div class="segmented" id="runner-pipeline-seg" role="group" aria-label="Reduction pipelines">
+                  <button type="button" data-pipe="czti" class="active">CZTI</button>
+                  <button type="button" data-pipe="laxpc">LAXPC</button>
+                  <button type="button" data-pipe="bary">Barycenter</button>
+                </div>
+              </div>
+              <div class="selector-group">
+                <span class="selector-label">Tools</span>
+                <div class="segmented" id="runner-tools-seg" role="group" aria-label="Standalone tools">
+                  <button type="button" data-pipe="czti-addspec">Co-add spectra</button>
+                  <button type="button" data-pipe="laxpc-backshift">Gain &amp; bkg shift</button>
+                </div>
+              </div>
+            </div>
+            <div class="inline-field">
+              <label for="runner-threads">Threads</label>
+              <input id="runner-threads" type="number" min="1" max="128" placeholder="Auto" class="input-compact" />
+            </div>
+          </div>
+          <p id="runner-context-note" class="helper-note">End-to-end CZTI Level-1 to Level-2 reduction: event cleaning, GTIs, DPH/DPI, sky images, light curves, and spectra.</p>
+
+          <!-- CZTI Form -->
+          <div id="form-czti" class="field-grid">
+            <div class="field span-2">
+              <label for="czti-input-dir">Level-1 input directory</label>
+              <div class="path-field">
+                <input id="czti-input-dir" type="text" class="input-path" placeholder="/path/to/czti_l1" />
+                <button type="button" class="subtle-btn browse-btn" data-target="czti-input-dir" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div class="field span-2">
+              <label for="czti-caldb-dir">CALDB directory</label>
+              <div class="path-field">
+                <input id="czti-caldb-dir" type="text" class="input-path" placeholder="/path/to/caldb" />
+                <button type="button" class="subtle-btn browse-btn" data-target="czti-caldb-dir" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="czti-output-dir">Output directory</label>
+              <div class="path-field">
+                <input id="czti-output-dir" type="text" class="input-path" placeholder="./out_czti" />
+                <button type="button" class="subtle-btn browse-btn" data-target="czti-output-dir" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="czti-prefix">Output prefix</label>
+              <input id="czti-prefix" type="text" class="input-path" value="czti_l2" />
+            </div>
+            <div class="field">
+              <label for="czti-entry-stage">Entry stage</label>
+              <select id="czti-entry-stage">
+                <option value="1">1: Science to event</option>
+                <option value="2">2: Cleaning and GTI</option>
+                <option value="3">3: DPI, imaging, LC, PHA</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="czti-exit-stage">Exit stage</label>
+              <select id="czti-exit-stage">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="czti-algo">Noise cleaning algorithm</label>
+              <select id="czti-algo">
+                <option value="default">Default</option>
+                <option value="generalized">Generalized (v3.0)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="czti-gti-type">GTI selection</label>
+              <select id="czti-gti-type">
+                <option value="quad">Per quadrant</option>
+                <option value="common">Common intersection</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="czti-ra">Source RA (deg, optional)</label>
+              <input id="czti-ra" type="number" step="any" placeholder="Auto from aspect" />
+            </div>
+            <div class="field">
+              <label for="czti-dec">Source Dec (deg, optional)</label>
+              <input id="czti-dec" type="number" step="any" placeholder="Auto from aspect" />
+            </div>
+            <div class="field">
+              <label for="czti-tbin">Light curve time bin (s)</label>
+              <input id="czti-tbin" type="number" step="any" value="1.0" />
+            </div>
+            <div class="field">
+              <label for="czti-img-algo">Sky imaging algorithm</label>
+              <select id="czti-img-algo">
+                <option value="balcc">Balanced cross-correlation (61x61)</option>
+                <option value="fft">FFT cross-correlation (481x481)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="czti-emin">Minimum energy (keV)</label>
+              <input id="czti-emin" type="number" step="any" value="20" />
+            </div>
+            <div class="field">
+              <label for="czti-emax">Maximum energy (keV)</label>
+              <input id="czti-emax" type="number" step="any" value="200" />
+            </div>
+            <div class="field span-2">
+              <div class="check-row">
+                <label class="check-label"><input id="czti-mask-weight" type="checkbox" checked /> Mask weighting</label>
+                <label class="check-label"><input id="czti-gen-resp" type="checkbox" checked /> Generate response matrix</label>
+              </div>
+            </div>
+
+            <details id="czti-advanced" class="advanced-drawer span-2">
+              <summary class="advanced-summary">Advanced overrides</summary>
+              <div class="advanced-drawer-body field-grid">
+                <div class="field span-2">
+                  <label for="czti-m0">Mode-M0 science FITS (--m0, optional)</label>
+                  <div class="path-field">
+                    <input id="czti-m0" type="text" class="input-path" placeholder="Auto-discovered from input_dir" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="czti-m0" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="czti-ss">Secondary science FITS (--ss, optional)</label>
+                  <div class="path-field">
+                    <input id="czti-ss" type="text" class="input-path" placeholder="Auto-discovered from input_dir" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="czti-ss" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="czti-tct">Time calibration table (--tct, optional)</label>
+                  <div class="path-field">
+                    <input id="czti-tct" type="text" class="input-path" placeholder="Auto-discovered from input_dir" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="czti-tct" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="czti-mkf">Makefilter FITS (--mkf, optional)</label>
+                  <div class="path-field">
+                    <input id="czti-mkf" type="text" class="input-path" placeholder="Auto-discovered from input_dir" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="czti-mkf" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="czti-mkf-thresh">MKF threshold file (--mkf-thresholds, optional)</label>
+                  <div class="path-field">
+                    <input id="czti-mkf-thresh" type="text" class="input-path" placeholder="Default CALDB MKF thresholds" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="czti-mkf-thresh" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="czti-user-gti">User GTI FITS (--user-gti, optional)</label>
+                  <div class="path-field">
+                    <input id="czti-user-gti" type="text" class="input-path" placeholder="Optional custom GTI FITS file" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="czti-user-gti" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="czti-output-type">Bin-data output type (--output-type)</label>
+                  <select id="czti-output-type">
+                    <option value="both" selected>both (spectrum + light curve)</option>
+                    <option value="spec">spec (spectrum only)</option>
+                    <option value="lc">lc (light curve only)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="czti-oversampling">Image oversampling (1 to 64)</label>
+                  <input id="czti-oversampling" type="number" min="1" max="64" step="1" placeholder="16" />
+                </div>
+                <div class="field span-2">
+                  <label>Quadrants (--quads)</label>
+                  <div id="czti-quads" class="check-row">
+                    <label class="check-label"><input type="checkbox" class="czti-quad-cb" value="0" checked /> Q0</label>
+                    <label class="check-label"><input type="checkbox" class="czti-quad-cb" value="1" checked /> Q1</label>
+                    <label class="check-label"><input type="checkbox" class="czti-quad-cb" value="2" checked /> Q2</label>
+                    <label class="check-label"><input type="checkbox" class="czti-quad-cb" value="3" checked /> Q3</label>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label class="check-label"><input id="czti-gen-evt" type="checkbox" /> Generate weighted event file (--gen-evt)</label>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- LAXPC Form -->
+          <div id="form-laxpc" class="field-grid hidden">
+            <div class="field span-2">
+              <label for="laxpc-input-dir">Level-1 input directory</label>
+              <div class="path-field">
+                <input id="laxpc-input-dir" type="text" class="input-path" placeholder="/path/to/laxpc_l1" />
+                <button type="button" class="subtle-btn browse-btn" data-target="laxpc-input-dir" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div class="field span-2">
+              <label for="laxpc-caldb-dir">CALDB directory</label>
+              <div class="path-field">
+                <input id="laxpc-caldb-dir" type="text" class="input-path" placeholder="/path/to/laxpc_caldb" />
+                <button type="button" class="subtle-btn browse-btn" data-target="laxpc-caldb-dir" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div class="field span-2">
+              <label for="laxpc-output-dir">Output directory</label>
+              <div class="path-field">
+                <input id="laxpc-output-dir" type="text" class="input-path" placeholder="./out_laxpc" />
+                <button type="button" class="subtle-btn browse-btn" data-target="laxpc-output-dir" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="laxpc-units">Detector units</label>
+              <input id="laxpc-units" type="text" class="input-path" value="1,2,3" />
+            </div>
+            <div class="field">
+              <label for="laxpc-tbin">Light curve time bin (s)</label>
+              <input id="laxpc-tbin" type="number" step="any" value="1.0" />
+            </div>
+            <div class="field">
+              <label for="laxpc-channels">Spectrum channels</label>
+              <select id="laxpc-channels">
+                <option value="256">256</option>
+                <option value="512" selected>512</option>
+                <option value="1024">1024</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="laxpc-min-elv">Minimum elevation (deg)</label>
+              <input id="laxpc-min-elv" type="number" step="any" value="0" />
+            </div>
+            <div class="field span-2">
+              <div class="check-row">
+                <label class="check-label"><input id="laxpc-fmt-a" type="checkbox" checked /> Format A combined</label>
+                <label class="check-label"><input id="laxpc-fmt-b" type="checkbox" checked /> Format B per unit</label>
+                <label class="check-label"><input id="laxpc-orbit" type="checkbox" checked /> Write orbit file</label>
+                <label class="check-label"><input id="laxpc-single" type="checkbox" /> Single events only</label>
+                <label class="check-label"><input id="laxpc-layer1" type="checkbox" /> Top layer only</label>
+              </div>
+            </div>
+
+            <details id="laxpc-advanced" class="advanced-drawer span-2">
+              <summary class="advanced-summary">Advanced overrides</summary>
+              <div class="advanced-drawer-body field-grid">
+                <div class="field">
+                  <label for="laxpc-deadtime">Deadtime (s, --deadtime)</label>
+                  <input id="laxpc-deadtime" type="number" step="any" min="0" placeholder="4.3e-5" />
+                </div>
+                <div class="field">
+                  <label for="laxpc-energy-range">Energy range keV (--energy-range)</label>
+                  <input id="laxpc-energy-range" type="text" class="input-path" placeholder="3:80 (requires CALDB)" />
+                </div>
+                <div class="field">
+                  <label for="laxpc-pha-min">PHA min (0 to 1023)</label>
+                  <input id="laxpc-pha-min" type="number" min="0" max="1023" step="1" placeholder="0" />
+                </div>
+                <div class="field">
+                  <label for="laxpc-pha-max">PHA max (0 to 1023)</label>
+                  <input id="laxpc-pha-max" type="number" min="0" max="1023" step="1" placeholder="1023" />
+                </div>
+                <div class="field span-2">
+                  <label for="laxpc-anodes">Anode selection (--anodes, overrides top layer)</label>
+                  <input id="laxpc-anodes" type="text" class="input-path" placeholder="all, layer1, or 1,2,3" />
+                </div>
+                <div class="field">
+                  <label for="laxpc-saa-entry">SAA entry longitude (deg)</label>
+                  <input id="laxpc-saa-entry" type="number" step="any" placeholder="Auto" />
+                </div>
+                <div class="field">
+                  <label for="laxpc-saa-exit">SAA exit longitude (deg)</label>
+                  <input id="laxpc-saa-exit" type="number" step="any" placeholder="Auto" />
+                </div>
+                <div class="field">
+                  <label for="laxpc-merge-gap">GTI merge gap (s)</label>
+                  <input id="laxpc-merge-gap" type="number" step="any" min="0" placeholder="Auto" />
+                </div>
+                <div class="field">
+                  <label for="laxpc-min-dur">Min GTI duration (s)</label>
+                  <input id="laxpc-min-dur" type="number" step="any" min="0" placeholder="Auto" />
+                </div>
+                <div class="field span-2">
+                  <label for="laxpc-user-gti">User GTI file (--user-gti, optional)</label>
+                  <div class="path-field">
+                    <input id="laxpc-user-gti" type="text" class="input-path" placeholder="FITS GTI or 2-column ASCII" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="laxpc-user-gti" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="laxpc-bkg-model">Background model path (--bkg-model, optional)</label>
+                  <div class="path-field">
+                    <input id="laxpc-bkg-model" type="text" class="input-path" placeholder="Optional LAXPC background model" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="laxpc-bkg-model" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="laxpc-bkg-pha">Background .pha path (--bkg-pha, optional)</label>
+                  <div class="path-field">
+                    <input id="laxpc-bkg-pha" type="text" class="input-path" placeholder="Optional background .pha spectrum" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="laxpc-bkg-pha" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="laxpc-bkg-peak">Background 30 keV peak ch</label>
+                  <input id="laxpc-bkg-peak" type="number" step="any" min="0" placeholder="Auto from catalog" />
+                </div>
+                <div class="field span-2">
+                  <div class="check-row">
+                    <label class="check-label"><input id="laxpc-user-gti-only" type="checkbox" /> User GTI only (--user-gti-only)</label>
+                    <label class="check-label"><input id="laxpc-ascii" type="checkbox" /> Write ASCII products (--ascii)</label>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Barycenter Form -->
+          <div id="form-bary" class="field-grid hidden">
+            <div class="field span-2">
+              <label for="bary-input">Input event FITS file</label>
+              <div class="path-field">
+                <input id="bary-input" type="text" class="input-path" placeholder="/path/to/events.evt" />
+                <button type="button" class="subtle-btn browse-btn" data-target="bary-input" data-mode="file">Browse</button>
+              </div>
+            </div>
+            <div class="field span-2">
+              <label for="bary-output">Output barycentered FITS</label>
+              <input id="bary-output" type="text" class="input-path" placeholder="./bary_output.evt" />
+            </div>
+            <div class="field span-2">
+              <label for="bary-orbit">Spacecraft orbit file (.orb)</label>
+              <div class="path-field">
+                <input id="bary-orbit" type="text" class="input-path" placeholder="/path/to/orbit.orb" />
+                <button type="button" class="subtle-btn browse-btn" data-target="bary-orbit" data-mode="file">Browse</button>
+              </div>
+            </div>
+            <div class="field span-2">
+              <label for="bary-ephem">JPL ephemeris (JPLEPH.405, optional)</label>
+              <div class="path-field">
+                <input id="bary-ephem" type="text" class="input-path" placeholder="Leave blank for built-in analytical ephemeris" />
+                <button type="button" class="subtle-btn browse-btn" data-target="bary-ephem" data-mode="file">Browse</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="bary-ra">Target RA (deg)</label>
+              <input id="bary-ra" type="number" step="any" value="83.633083" />
+            </div>
+            <div class="field">
+              <label for="bary-dec">Target Dec (deg)</label>
+              <input id="bary-dec" type="number" step="any" value="22.014500" />
+            </div>
+            <div class="field">
+              <label for="bary-frame">Coordinate frame</label>
+              <select id="bary-frame">
+                <option value="ICRS">ICRS</option>
+                <option value="FK5">FK5</option>
+              </select>
+            </div>
+            <div class="field field-bottom">
+              <label class="check-label"><input id="bary-checksums" type="checkbox" checked /> Write FITS checksums</label>
+            </div>
+
+            <details id="bary-advanced" class="advanced-drawer span-2">
+              <summary class="advanced-summary">Advanced overrides</summary>
+              <div class="advanced-drawer-body field-grid">
+                <div class="field span-2">
+                  <label for="bary-mkf">MKF fallback file (--mkf, mutually exclusive with orbit)</label>
+                  <div class="path-field">
+                    <input id="bary-mkf" type="text" class="input-path" placeholder="Synthesize orbit from .mkf (clears orbit file)" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="bary-mkf" data-mode="file">Browse</button>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- CZTI Addspec Tool Form -->
+          <div id="form-czti-addspec" class="field-grid hidden">
+            <div class="field span-2">
+              <div class="section-head">
+                <label for="addspec-quick-pick">Quick-pick CZTI spectrum</label>
+                <button id="addspec-from-job-btn" type="button" class="text-action">Use latest CZTI job outputs</button>
+              </div>
+              <select id="addspec-quick-pick">
+                <option value="">Add a detected .pha (and paired .rsp)...</option>
+              </select>
+            </div>
+
+            <div class="field span-2">
+              <div class="section-head">
+                <span class="subsection-label">Input spectra and optional responses</span>
+                <button id="addspec-add-row" type="button" class="text-action">Add spectrum row</button>
+              </div>
+              <div id="addspec-rows" class="pair-list"></div>
+              <p id="addspec-row-hint" class="helper-note">Provide a matching .rsp for every row, or leave all .rsp fields blank.</p>
+            </div>
+
+            <div class="field span-2">
+              <label for="addspec-out-pha">Output co-added .pha path (-o)</label>
+              <input id="addspec-out-pha" type="text" class="input-path" placeholder="./out_czti/coadd.pha" />
+            </div>
+            <div class="field span-2">
+              <label for="addspec-out-rsp">Output co-added .rsp path (--out-rsp, optional)</label>
+              <input id="addspec-out-rsp" type="text" class="input-path" placeholder="Optional; requires matching .rsp inputs" />
+            </div>
+            <div class="field span-2">
+              <label class="check-label"><input id="addspec-add-exposure" type="checkbox" /> Sum exposures (--add-exposure)</label>
+              <p class="helper-note">Leave unchecked to average exposures (same-epoch multi-quadrant co-add); check to sum exposures (multi-orbit stacking).</p>
+            </div>
+          </div>
+
+          <!-- LAXPC Backshift Tool Form -->
+          <div id="form-laxpc-backshift" class="field-grid hidden">
+            <div class="field">
+              <label for="backshift-unit">Detector unit (--unit)</label>
+              <select id="backshift-unit">
+                <option value="10">LAXPC10 (10)</option>
+                <option value="20">LAXPC20 (20)</option>
+                <option value="30">LAXPC30 (30)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Observation epoch source</label>
+              <div class="segmented" id="backshift-epoch-seg" role="group" aria-label="Observation epoch source">
+                <button type="button" data-epoch="fits" class="active">FITS TSTART</button>
+                <button type="button" data-epoch="day">Mission day</button>
+              </div>
+            </div>
+            <div class="field span-2">
+              <label for="backshift-caldb">LAXPC CALDB directory (--caldb)</label>
+              <div class="path-field">
+                <input id="backshift-caldb" type="text" class="input-path" placeholder="/path/to/laxpc_caldb" />
+                <button type="button" class="subtle-btn browse-btn" data-target="backshift-caldb" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div id="backshift-fits-wrap" class="field span-2">
+              <label for="backshift-fits">Observation FITS file for TSTART (--fits)</label>
+              <div class="path-field">
+                <input id="backshift-fits" type="text" class="input-path" placeholder="/path/to/observation.evt" />
+                <button type="button" class="subtle-btn browse-btn" data-target="backshift-fits" data-mode="file">Browse</button>
+              </div>
+            </div>
+            <div id="backshift-day-wrap" class="field span-2 hidden">
+              <label for="backshift-mission-day">Mission day since launch (--mission-day)</label>
+              <input id="backshift-mission-day" type="number" step="any" min="0" placeholder="e.g. 250.0" />
+            </div>
+            <div class="field span-2">
+              <label for="backshift-bkg-pha">Background .pha spectrum (--bkg-pha, optional)</label>
+              <div class="path-field">
+                <input id="backshift-bkg-pha" type="text" class="input-path" placeholder="Optional; required to write shifted spectrum" />
+                <button type="button" class="subtle-btn browse-btn" data-target="backshift-bkg-pha" data-mode="file">Browse</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="backshift-bkg-peak">Background 30 keV peak ch</label>
+              <input id="backshift-bkg-peak" type="number" step="any" min="0" placeholder="Auto from catalog" />
+            </div>
+            <div class="field">
+              <label for="backshift-output">Shifted output .pha (-o, optional)</label>
+              <input id="backshift-output" type="text" class="input-path" placeholder="./out_laxpc/shifted_bkg.pha" />
+            </div>
+
+            <details id="backshift-advanced" class="advanced-drawer span-2">
+              <summary class="advanced-summary">Event and PHA filters</summary>
+              <div class="advanced-drawer-body field-grid">
+                <div class="field">
+                  <label for="backshift-pha-min">PHA min (0 to 1023)</label>
+                  <input id="backshift-pha-min" type="number" min="0" max="1023" step="1" value="0" />
+                </div>
+                <div class="field">
+                  <label for="backshift-pha-max">PHA max (0 to 1023)</label>
+                  <input id="backshift-pha-max" type="number" min="0" max="1023" step="1" value="1023" />
+                </div>
+                <div class="field span-2">
+                  <div class="check-row">
+                    <label class="check-label"><input id="backshift-layer1" type="checkbox" /> Top layer only (--layer1-only)</label>
+                    <label class="check-label"><input id="backshift-single" type="checkbox" /> Single events only (--single-only)</label>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <div class="action-footer">
+            <span id="runner-inline-status" class="helper-note" role="status" aria-live="polite">Runs directly in the local Rust engine with reproducible outputs.</span>
+            <button id="runner-submit" type="button" class="primary-btn">Run pipeline</button>
+          </div>
+        </div>
+
+        <!-- Right Reproducible Command & Job Log Stage -->
+        <div class="pane pane-stage">
+          <div class="stage-block">
+            <div class="section-head">
+              <h2 class="section-title">Reproducible command and config</h2>
+              <div class="inline-actions wrap-actions">
+                <button id="copy-cli-btn" type="button" class="text-action">Copy command</button>
+                <button id="copy-toml-btn" type="button" class="text-action">Copy TOML</button>
+                <button id="download-toml-btn" type="button" class="text-action">Download .toml</button>
+              </div>
+            </div>
+            <div class="code-group">
+              <div class="code-caption">Shell command</div>
+              <pre id="preview-cli" class="code-sheet">astrosat ...</pre>
+            </div>
+            <div class="code-group">
+              <div id="preview-toml-caption" class="code-caption">TOML configuration</div>
+              <pre id="preview-toml" class="code-sheet"># Live TOML config</pre>
+            </div>
+          </div>
+
+          <hr class="rule" />
+
+          <div id="jobs-stage" class="stage-block">
+            <div class="section-head">
+              <h2 class="section-title">Recent jobs and outputs</h2>
+              <button id="jobs-refresh-btn" type="button" class="text-action">Refresh</button>
+            </div>
+            <div id="jobs-list" class="job-feed">
+              <p class="empty-note">No jobs started yet. Choose a pipeline or tool on the left and run it to inspect generated FITS products.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 2: LIGHT CURVES & SPECTRA                                     -->
+    <!-- ================================================================== -->
+    <section id="tab-lc-spec" class="view" role="tabpanel">
+      <div id="lc-banner" class="notice notice-err hidden" role="alert">
+        <span id="lc-banner-msg"></span>
+        <button type="button" class="text-action" data-dismiss="lc">Dismiss</button>
+      </div>
+
+      <div class="rail-workbench">
+        <aside class="pane pane-rail">
+          <div class="section-head">
+            <h2 class="section-title">Series input</h2>
+            <button id="lc-clear-btn" type="button" class="text-action">Clear all</button>
+          </div>
+
+          <div class="segmented" id="lc-mode-seg" role="group" aria-label="Plot mode">
+            <button type="button" data-mode="lightcurve" class="active">Light curve</button>
+            <button type="button" data-mode="spectrum">Spectrum</button>
+          </div>
+
+          <div class="field">
+            <label for="lc-sample-select">Workspace sample</label>
+            <select id="lc-sample-select">
+              <option value="">Select detected product...</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="lc-path-input">FITS file path</label>
+            <div class="path-field">
+              <input id="lc-path-input" type="text" class="input-path" placeholder=".lc, .lcurv, .pha, or .spec" />
+              <button type="button" class="subtle-btn browse-btn" data-target="lc-path-input" data-mode="file">Browse</button>
+            </div>
+          </div>
+
+          <div id="lc-opts-box" class="field-grid">
+            <div class="field">
+              <label for="lc-rebin">Rebin factor</label>
+              <select id="lc-rebin">
+                <option value="1">1x (native)</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+                <option value="8">8x</option>
+                <option value="16">16x</option>
+                <option value="32">32x</option>
+                <option value="64">64x</option>
+              </select>
+            </div>
+            <div class="field field-bottom">
+              <label class="check-label"><input id="lc-rel-time" type="checkbox" checked /> Relative time</label>
+            </div>
+          </div>
+
+          <div id="spec-opts-box" class="field-stack hidden">
+            <div class="field">
+              <label for="spec-caldb-input">CALDB directory (LAXPC keV)</label>
+              <div class="path-field">
+                <input id="spec-caldb-input" type="text" class="input-path" placeholder="Auto-detected" />
+                <button type="button" class="subtle-btn browse-btn" data-target="spec-caldb-input" data-mode="dir">Browse</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="spec-xaxis">Horizontal axis</label>
+              <select id="spec-xaxis">
+                <option value="energy">Energy (keV)</option>
+                <option value="channel">Channel</option>
+              </select>
+            </div>
+            <label class="check-label"><input id="spec-good-only" type="checkbox" checked /> Exclude bad quality channels</label>
+          </div>
+
+          <button id="lc-add-btn" type="button" class="primary-btn full-width">Add series to plot</button>
+
+          <hr class="rule" />
+
+          <div class="field-stack">
+            <div class="subsection-label">Loaded series</div>
+            <div id="lc-series-list" class="series-stack">
+              <p class="empty-note">No files loaded yet.</p>
+            </div>
+          </div>
+        </aside>
+
+        <div class="pane pane-stage">
+          <div class="plot-bar">
+            <div class="check-row">
+              <label class="check-label"><input id="lc-show-err" type="checkbox" checked /> Error bars</label>
+              <label class="check-label"><input id="lc-log-x" type="checkbox" /> Log X</label>
+              <label class="check-label"><input id="lc-log-y" type="checkbox" /> Log Y</label>
+              <label class="check-label"><input id="lc-step" type="checkbox" /> Step</label>
+              <label class="check-label" id="lc-gti-wrap"><input id="lc-show-gti" type="checkbox" checked /> GTI shading</label>
+            </div>
+            <div class="inline-actions">
+              <button id="lc-reset-btn" type="button" class="text-action">Reset zoom</button>
+              <button id="lc-svg-btn" type="button" class="text-action">Export SVG</button>
+              <button id="lc-png-btn" type="button" class="text-action">Export PNG</button>
+            </div>
+          </div>
+
+          <div class="canvas-frame canvas-tall">
+            <canvas id="lc-canvas"></canvas>
+            <div id="lc-tooltip" class="plot-tooltip hidden"></div>
+            <div id="lc-empty" class="canvas-empty">
+              <div class="canvas-empty-title">Inspect calibrated light curves and spectra</div>
+              <p class="canvas-empty-copy">Select an OGIP .lc, .lcurv, .pha, or .spec file on the left to overlay series, inspect error bars, zoom with scroll, and export publication figures.</p>
+            </div>
+            <div id="lc-loading" class="canvas-loading hidden"><span class="spinner"></span>Reading FITS table...</div>
+          </div>
+
+          <dl class="metric-strip">
+            <div class="metric-item"><dt>Series loaded</dt><dd id="lc-stat-count">0</dd></div>
+            <div class="metric-item"><dt>Exposure</dt><dd id="lc-stat-exp">N/A</dd></div>
+            <div class="metric-item"><dt>Mean or total rate</dt><dd id="lc-stat-rate">N/A</dd></div>
+            <div class="metric-item"><dt>Binning and mapping</dt><dd id="lc-stat-meta">N/A</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 3: 2D IMAGING                                                 -->
+    <!-- ================================================================== -->
+    <section id="tab-imaging" class="view" role="tabpanel">
+      <div id="img-banner" class="notice notice-err hidden" role="alert">
+        <span id="img-banner-msg"></span>
+        <button type="button" class="text-action" data-dismiss="img">Dismiss</button>
+      </div>
+
+      <div class="rail-workbench">
+        <aside class="pane pane-rail">
+          <div class="section-head">
+            <h2 class="section-title">2D image source</h2>
+          </div>
+
+          <div class="field">
+            <label for="img-sample-select">Workspace sample</label>
+            <select id="img-sample-select">
+              <option value="">Select detected 2D image...</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="img-path-input">FITS image file</label>
+            <div class="path-field">
+              <input id="img-path-input" type="text" class="input-path" placeholder=".dph, .dpi, or .img_Q*" />
+              <button type="button" class="subtle-btn browse-btn" data-target="img-path-input" data-mode="file">Browse</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="img-hdu-select">Image HDU</label>
+            <select id="img-hdu-select">
+              <option value="">First 2D image extension</option>
+            </select>
+          </div>
+
+          <button id="img-load-btn" type="button" class="primary-btn full-width">Render image</button>
+
+          <hr class="rule" />
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="img-cmap">Colormap</label>
+              <select id="img-cmap">
+                <option value="viridis">Viridis</option>
+                <option value="inferno">Inferno</option>
+                <option value="cividis">Cividis</option>
+                <option value="grayscale">Grayscale</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="img-stretch">Intensity stretch</label>
+              <select id="img-stretch">
+                <option value="linear">Linear</option>
+                <option value="log">Logarithmic</option>
+                <option value="asinh">Asinh</option>
+                <option value="p1_p99">1st to 99th percentile</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="check-row">
+            <label class="check-label"><input id="img-quads" type="checkbox" checked /> Quadrant boundaries</label>
+            <label class="check-label"><input id="img-peak" type="checkbox" checked /> Peak marker</label>
+          </div>
+
+          <hr class="rule" />
+
+          <div class="subsection-label">Image statistics</div>
+          <dl class="kv-list">
+            <div class="kv-row"><dt>Dimensions</dt><dd id="img-stat-dim">N/A</dd></div>
+            <div class="kv-row"><dt>Peak significance</dt><dd id="img-stat-snr">N/A</dd></div>
+            <div class="kv-row"><dt>Peak pixel</dt><dd id="img-stat-peak">N/A</dd></div>
+            <div class="kv-row"><dt>Peak value</dt><dd id="img-stat-max">N/A</dd></div>
+            <div class="kv-row"><dt>Min / median</dt><dd id="img-stat-minmed">N/A</dd></div>
+            <div class="kv-row"><dt>Mean and sigma</dt><dd id="img-stat-meanstd">N/A</dd></div>
+          </dl>
+        </aside>
+
+        <div class="pane pane-stage">
+          <div class="plot-bar">
+            <div class="bar-meta">
+              <span id="img-wcs-label" class="meta-strong">Coordinates: Not loaded</span>
+              <span class="meta-muted">Scroll to zoom, drag to pan, double-click to reset</span>
+            </div>
+            <div class="inline-actions">
+              <button id="img-reset-btn" type="button" class="text-action">Reset zoom</button>
+              <button id="img-png-btn" type="button" class="text-action">Export PNG</button>
+            </div>
+          </div>
+
+          <div class="canvas-frame canvas-image">
+            <canvas id="img-canvas"></canvas>
+            <div id="img-empty" class="canvas-empty">
+              <div class="canvas-empty-title">Detector plane and coded-aperture sky maps</div>
+              <p class="canvas-empty-copy">Load a 128x128 CZTI detector histogram or a BalCC/FFT sky reconstruction with bottom-up FITS orientation and live WCS coordinate readout.</p>
+            </div>
+            <div id="img-loading" class="canvas-loading hidden"><span class="spinner"></span>Rendering 2D FITS array...</div>
+          </div>
+
+          <dl class="metric-strip">
+            <div class="metric-item"><dt>Cursor pixel (0-based)</dt><dd id="img-cur-pix">N/A</dd></div>
+            <div class="metric-item"><dt>Pixel value</dt><dd id="img-cur-val">N/A</dd></div>
+            <div class="metric-item"><dt id="img-cur-wcs1-lbl">World X</dt><dd id="img-cur-wcs1">N/A</dd></div>
+            <div class="metric-item"><dt id="img-cur-wcs2-lbl">World Y</dt><dd id="img-cur-wcs2">N/A</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 4: PHASE-FOLDED & MULTI-BAND PULSE ALIGNMENT                  -->
+    <!-- ================================================================== -->
+    <section id="tab-pulse" class="view" role="tabpanel">
+      <div id="pulse-banner" class="notice notice-err hidden" role="alert">
+        <span id="pulse-banner-msg"></span>
+        <button type="button" class="text-action" data-dismiss="pulse">Dismiss</button>
+      </div>
+
+      <div class="rail-workbench rail-wide">
+        <aside class="pane pane-rail">
+          <div class="section-head">
+            <h2 class="section-title">Timing ephemeris</h2>
+            <button id="pulse-search-toggle" type="button" class="text-action">Search period</button>
+          </div>
+
+          <div class="field-grid">
+            <div class="field span-2">
+              <label for="pulse-freq">Spin frequency (Hz)</label>
+              <input id="pulse-freq" type="number" step="any" value="29.658051471" />
+            </div>
+            <div class="field">
+              <label for="pulse-fdot">Spin derivative (Hz/s)</label>
+              <input id="pulse-fdot" type="number" step="any" value="0" />
+            </div>
+            <div class="field">
+              <label for="pulse-epoch">Epoch T0 (MET s)</label>
+              <input id="pulse-epoch" type="number" step="any" placeholder="Auto (TSTART)" />
+            </div>
+            <div class="field">
+              <label for="pulse-nbins">Phase bins</label>
+              <select id="pulse-nbins">
+                <option value="16">16</option>
+                <option value="32" selected>32</option>
+                <option value="64">64</option>
+                <option value="128">128</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="pulse-harmonics">Z2 harmonics</label>
+              <select id="pulse-harmonics">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+
+            <details id="pulse-ephem-advanced" class="advanced-drawer span-2">
+              <summary class="advanced-summary">Advanced ephemeris</summary>
+              <div class="advanced-drawer-body field-grid">
+                <div class="field">
+                  <label for="pulse-period">Spin period P (s)</label>
+                  <input id="pulse-period" type="number" step="any" min="0" placeholder="1 / freq_hz" />
+                </div>
+                <div class="field">
+                  <label for="pulse-fddot">Second derivative (Hz/s^2)</label>
+                  <input id="pulse-fddot" type="number" step="any" value="0" />
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Inline Periodogram Search Drawer -->
+          <div id="pulse-search-box" class="drawer hidden">
+            <div class="field">
+              <label for="search-path">Event file for period search</label>
+              <div class="path-field">
+                <input id="search-path" type="text" class="input-path" placeholder="Uses first event input if empty" />
+                <button type="button" class="subtle-btn browse-btn" data-target="search-path" data-mode="file">Browse</button>
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="search-span">Search span (Hz)</label>
+                <input id="search-span" type="number" step="any" value="0.002" />
+              </div>
+              <div class="field">
+                <label for="search-trials">Trial frequencies</label>
+                <input id="search-trials" type="number" min="1" max="5000" value="" placeholder="300 (blank uses df_hz)" />
+              </div>
+            </div>
+            <details id="pulse-search-advanced" class="advanced-drawer">
+              <summary class="advanced-summary">Advanced search parameters</summary>
+              <div class="advanced-drawer-body field-grid">
+                <div class="field">
+                  <label for="search-freq-min">Min frequency (Hz)</label>
+                  <input id="search-freq-min" type="number" step="any" min="0" placeholder="Optional range" />
+                </div>
+                <div class="field">
+                  <label for="search-freq-max">Max frequency (Hz)</label>
+                  <input id="search-freq-max" type="number" step="any" min="0" placeholder="Optional range" />
+                </div>
+                <div class="field">
+                  <label for="search-df">Frequency step df (Hz)</label>
+                  <input id="search-df" type="number" step="any" min="0" placeholder="Nyquist 1/(5T)" />
+                </div>
+                <div class="field">
+                  <label for="search-hdu">Event HDU name/index</label>
+                  <input id="search-hdu" type="text" class="input-path" placeholder="Auto (EVENTS / Q0..Q3)" />
+                </div>
+                <div class="field span-2">
+                  <label for="search-gti">GTI filter file (.gti / .fits, optional)</label>
+                  <div class="path-field">
+                    <input id="search-gti" type="text" class="input-path" placeholder="Optional GTI FITS file" />
+                    <button type="button" class="subtle-btn browse-btn" data-target="search-gti" data-mode="file">Browse</button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="search-pi-min">PI min</label>
+                  <input id="search-pi-min" type="number" step="1" placeholder="All" />
+                </div>
+                <div class="field">
+                  <label for="search-pi-max">PI max</label>
+                  <input id="search-pi-max" type="number" step="1" placeholder="All" />
+                </div>
+                <div class="field">
+                  <label for="search-unit">LAXPC unit</label>
+                  <select id="search-unit">
+                    <option value="">All units</option>
+                    <option value="1">Unit 1</option>
+                    <option value="2">Unit 2</option>
+                    <option value="3">Unit 3</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="search-layer">LAXPC layer</label>
+                  <input id="search-layer" type="number" min="0" step="1" placeholder="All" />
+                </div>
+              </div>
+            </details>
+            <div class="action-footer compact">
+              <span id="search-result-meta" class="helper-note">Parallel Z2 periodogram</span>
+              <button id="pulse-run-search" type="button" class="subtle-btn">Run search</button>
+            </div>
+          </div>
+
+          <hr class="rule" />
+
+          <div class="section-head">
+            <h2 class="section-title">Energy bands</h2>
+            <button id="pulse-add-input" type="button" class="text-action">Add event file</button>
+          </div>
+
+          <div class="segmented" id="pulse-preset-seg" role="group" aria-label="Instrument presets">
+            <button type="button" data-preset="laxpc4" class="active">LAXPC 4-band</button>
+            <button type="button" data-preset="czti3">CZTI 3-band</button>
+            <button type="button" data-preset="cross">LAXPC + CZTI</button>
+          </div>
+
+          <div id="pulse-inputs-container" class="field-stack"></div>
+
+          <button id="pulse-fold-btn" type="button" class="primary-btn full-width">Fold and align profiles</button>
+        </aside>
+
+        <div class="pane pane-stage">
+          <div id="periodogram-card" class="stage-block hidden">
+            <div class="section-head">
+              <div class="bar-meta">
+                <h2 class="section-title">Z2 periodogram</h2>
+                <span id="pgram-summary" class="meta-strong"></span>
+              </div>
+              <button id="pgram-close" type="button" class="text-action">Hide</button>
+            </div>
+            <div class="canvas-frame canvas-short">
+              <canvas id="pgram-canvas"></canvas>
+              <div id="pgram-tooltip" class="plot-tooltip hidden"></div>
+            </div>
+            <hr class="rule" />
+          </div>
+
+          <div class="plot-bar">
+            <div class="control-row compact">
+              <div class="segmented" id="pulse-mode-seg" role="group" aria-label="Pulse display mode">
+                <button type="button" data-mode="stacked" class="active">Stacked alignment</button>
+                <button type="button" data-mode="overlay">Normalized overlay</button>
+              </div>
+              <label class="check-label"><input id="pulse-show-err" type="checkbox" checked /> Error bars</label>
+              <label class="check-label"><input id="pulse-show-guide" type="checkbox" checked /> Peak guide</label>
+            </div>
+            <div class="inline-actions">
+              <button id="pulse-svg-btn" type="button" class="text-action">Export SVG</button>
+              <button id="pulse-png-btn" type="button" class="text-action">Export PNG</button>
+            </div>
+          </div>
+
+          <div class="canvas-frame canvas-pulse">
+            <canvas id="pulse-canvas"></canvas>
+            <div id="pulse-tooltip" class="plot-tooltip hidden"></div>
+            <div id="pulse-empty" class="canvas-empty">
+              <div class="canvas-empty-title">Compare pulse alignment across energy bands</div>
+              <p class="canvas-empty-copy">Select a preset or add barycentered LAXPC and CZTI event lists on the left, then fold to measure peak phase, pulsed fraction, and cross-correlation lags.</p>
+            </div>
+            <div id="pulse-loading" class="canvas-loading hidden"><span class="spinner"></span>Folding photon arrival times...</div>
+          </div>
+
+          <div class="stage-block">
+            <div class="section-head">
+              <h3 class="subsection-label">Cross-correlation phase lag summary</h3>
+              <span id="pulse-elapsed" class="helper-note"></span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Band</th>
+                    <th class="num">Events</th>
+                    <th class="num">Peak phase</th>
+                    <th class="num">Lag (cycles)</th>
+                    <th class="num">Lag (ms)</th>
+                    <th class="num">Z2 power</th>
+                    <th class="num">Chi2 / dof</th>
+                    <th class="num">PF (min-max)</th>
+                    <th class="num">PF (RMS)</th>
+                  </tr>
+                </thead>
+                <tbody id="pulse-table-body">
+                  <tr><td colspan="9" class="table-empty">No folded profiles computed yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 5: FITS INSPECTOR                                             -->
+    <!-- ================================================================== -->
+    <section id="tab-inspector" class="view" role="tabpanel">
+      <div id="insp-banner" class="notice notice-err hidden" role="alert">
+        <span id="insp-banner-msg"></span>
+        <button type="button" class="text-action" data-dismiss="insp">Dismiss</button>
+      </div>
+
+      <div class="rail-workbench">
+        <aside class="pane pane-rail">
+          <div class="section-head">
+            <h2 class="section-title">Workspace files</h2>
+            <button id="insp-up-btn" type="button" class="text-action">Parent folder</button>
+          </div>
+
+          <div class="path-field">
+            <input id="insp-dir-input" type="text" class="input-path" placeholder="Workspace directory" />
+            <button id="insp-dir-go" type="button" class="subtle-btn">Open</button>
+          </div>
+
+          <input id="insp-file-filter" type="text" placeholder="Filter filenames..." />
+
+          <div class="table-scroll file-scroll">
+            <table class="data-table compact-table">
+              <thead>
+                <tr><th>Name</th><th class="num">Size</th></tr>
+              </thead>
+              <tbody id="insp-browser-body">
+                <tr><td colspan="2" class="table-empty">Loading workspace...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </aside>
+
+        <div class="pane pane-stage">
+          <div class="stage-block">
+            <div class="path-field insp-path-bar">
+              <input id="insp-path-input" type="text" class="input-path" placeholder="Select a FITS file from the directory list or enter a path..." />
+              <button id="insp-load-btn" type="button" class="primary-btn">Inspect</button>
+              <button id="insp-validate-btn" type="button" class="subtle-btn">Validate strict</button>
+            </div>
+
+            <div id="insp-status-line" class="status-line"></div>
+
+            <dl class="metric-strip metric-5">
+              <div class="metric-item"><dt>Instrument</dt><dd id="insp-m-inst">N/A</dd></div>
+              <div class="metric-item"><dt>Object / ObsID</dt><dd id="insp-m-obj">N/A</dd></div>
+              <div class="metric-item"><dt>Exposure</dt><dd id="insp-m-exp">N/A</dd></div>
+              <div class="metric-item"><dt>Time system</dt><dd id="insp-m-time">N/A</dd></div>
+              <div class="metric-item"><dt>Coordinates</dt><dd id="insp-m-radec">N/A</dd></div>
+            </dl>
+
+            <div id="insp-val-box" class="hidden field-stack">
+              <div class="section-head">
+                <span class="subsection-label">Strict OGIP validation output</span>
+                <span id="insp-val-summary" class="meta-strong"></span>
+              </div>
+              <pre id="insp-val-findings" class="code-sheet code-short"></pre>
+            </div>
+
+            <div id="insp-gti-wrap" class="hidden field-stack">
+              <div class="section-head">
+                <span class="subsection-label">Good time intervals</span>
+                <span id="insp-gti-summary" class="helper-note"></span>
+              </div>
+              <div id="insp-gti-bar" class="gti-track"></div>
+            </div>
+          </div>
+
+          <hr class="rule" />
+
+          <div class="stage-block">
+            <div class="section-head">
+              <div class="bar-meta">
+                <h2 class="section-title">HDU structure</h2>
+                <span id="insp-hdu-count" class="meta-muted">0 HDUs</span>
+              </div>
+              <div id="insp-quick-open" class="inline-actions"></div>
+            </div>
+            <div class="table-scroll hdu-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="num">Index</th>
+                    <th>Extension</th>
+                    <th>Type</th>
+                    <th class="num">Shape / rows</th>
+                    <th class="num">Exposure (s)</th>
+                    <th>Checksums</th>
+                  </tr>
+                </thead>
+                <tbody id="insp-hdu-body">
+                  <tr><td colspan="6" class="table-empty">Select a FITS file to view its extensions.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <hr class="rule" />
+
+          <div class="stage-block">
+            <div class="section-head">
+              <div class="bar-meta">
+                <h2 id="insp-selected-hdu-label" class="section-title">Selected HDU details</h2>
+              </div>
+              <div class="segmented" id="insp-detail-seg" role="group" aria-label="HDU detail view">
+                <button type="button" data-sub="cards" class="active">Header cards</button>
+                <button type="button" data-sub="rows">Sample rows</button>
+              </div>
+            </div>
+
+            <div id="insp-cards-panel" class="field-stack">
+              <input id="insp-card-search" type="text" placeholder="Search keywords, values, or comments..." />
+              <div class="table-scroll detail-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>Keyword</th><th>Value</th><th>Comment</th></tr>
+                  </thead>
+                  <tbody id="insp-cards-body">
+                    <tr><td colspan="3" class="table-empty">No HDU selected.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="insp-rows-panel" class="field-stack hidden">
+              <div class="section-head">
+                <span id="insp-rows-info" class="helper-note">No table loaded.</span>
+                <div class="inline-actions">
+                  <button id="insp-rows-prev" type="button" class="text-action" disabled>Previous</button>
+                  <button id="insp-rows-next" type="button" class="text-action" disabled>Next</button>
+                </div>
+              </div>
+              <div class="table-scroll detail-scroll">
+                <table class="data-table">
+                  <thead id="insp-rows-head"></thead>
+                  <tbody id="insp-rows-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Shared File Browser Dialog -->
+  <div id="file-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="file-modal-title">
+    <div class="modal-sheet">
+      <div class="section-head">
+        <h2 id="file-modal-title" class="section-title">Browse workspace</h2>
+        <button id="file-modal-close" type="button" class="text-action">Close</button>
+      </div>
+      <div id="modal-quick-jumps" class="inline-actions wrap-actions"></div>
+      <div class="path-field">
+        <button id="modal-up-btn" type="button" class="subtle-btn">Up</button>
+        <input id="modal-path-input" type="text" class="input-path" />
+        <button id="modal-go-btn" type="button" class="subtle-btn">Open</button>
+      </div>
+      <input id="modal-filter" type="text" placeholder="Filter directory entries..." />
+      <div class="table-scroll modal-scroll">
+        <table class="data-table compact-table">
+          <thead>
+            <tr><th>Name</th><th>Kind</th><th class="num">Size</th></tr>
+          </thead>
+          <tbody id="modal-entries-body"></tbody>
+        </table>
+      </div>
+      <div class="action-footer">
+        <span id="modal-hint" class="helper-note">Select a file or folder</span>
+        <div class="inline-actions">
+          <button id="modal-cancel" type="button" class="text-action">Cancel</button>
+          <button id="modal-select-dir" type="button" class="primary-btn">Use this directory</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load / Import TOML Configuration Dialog -->
+  <div id="toml-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="toml-modal-title">
+    <div class="modal-sheet modal-compact">
+      <div class="section-head">
+        <h2 id="toml-modal-title" class="section-title">Load TOML configuration</h2>
+        <button id="toml-modal-close" type="button" class="text-action">Close</button>
+      </div>
+      <p class="helper-note">Upload or drop an AstroSat <code>.toml</code> (or JSON) config file, or paste configuration text below to populate pipeline and timing parameters.</p>
+      <div id="toml-dropzone" class="toml-dropzone">
+        <label for="toml-file-input" class="file-upload-label">
+          <span>Choose .toml file</span>
+          <input id="toml-file-input" type="file" accept=".toml,.json,.txt" class="hidden" />
+        </label>
+        <span id="toml-file-name" class="helper-note">Or drag and drop a .toml file here</span>
+      </div>
+      <div class="field">
+        <label for="toml-paste-input">Configuration content</label>
+        <textarea id="toml-paste-input" rows="10" placeholder="[czti]&#10;input_dir = &quot;/path/to/czti_l1&quot;&#10;caldb_dir = &quot;/path/to/caldb&quot;"></textarea>
+      </div>
+      <div id="toml-modal-err" class="notice notice-err hidden" role="alert"></div>
+      <div class="action-footer">
+        <button id="toml-clear-btn" type="button" class="text-action">Clear</button>
+        <div class="inline-actions">
+          <button id="toml-modal-cancel" type="button" class="text-action">Cancel</button>
+          <button id="toml-apply-btn" type="button" class="primary-btn">Apply configuration</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-blocking Action Toast -->
+  <div id="studio-toast" class="toast hidden" role="status" aria-live="polite">
+    <span id="toast-msg"></span>
+    <div class="inline-actions">
+      <button id="toast-action" type="button" class="text-action hidden">View job</button>
+      <button id="toast-close" type="button" class="text-action">Dismiss</button>
+    </div>
+  </div>
+
+  <script src="/charts.js"></script>
+  <script src="/studio/studio.js"></script>
+</body>
+</html>

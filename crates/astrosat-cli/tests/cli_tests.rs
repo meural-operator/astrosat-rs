@@ -42,6 +42,7 @@ fn help_succeeds_for_every_subcommand() {
         &["inspect", "--help"],
         &["validate", "--help"],
         &["timing", "--help"],
+        &["ui", "--help"],
     ];
 
     for args in subcommands {

@@ -13,6 +13,7 @@ categories.workspace = true
 astrosat-fits.workspace = true
 thiserror.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 rayon.workspace = true
 chrono.workspace = true
 

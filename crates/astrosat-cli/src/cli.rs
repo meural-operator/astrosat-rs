@@ -91,6 +91,31 @@ pub enum TopCommand {
     Validate(ValidateArgs),
     /// Pulsar epoch-folding and Z^2_n periodicity test on a barycentered event FITS file.
     Timing(TimingArgs),
+    /// Launch the lightweight zero-dependency local web UI for FITS inspection, plotting, and pipelines.
+    Ui(UiArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct UiArgs {
+    /// Host address to bind the local HTTP server.
+    #[arg(long, default_value = "127.0.0.1", value_name = "HOST")]
+    pub host: String,
+
+    /// TCP port for the local HTTP server (`0` selects an ephemeral port).
+    #[arg(short = 'p', long, default_value_t = 8080, value_name = "PORT")]
+    pub port: u16,
+
+    /// Default data directory shown in the file browser (defaults to current working directory).
+    #[arg(long, value_name = "PATH")]
+    pub data_dir: Option<PathBuf>,
+
+    /// Open the web UI in the default browser on startup (overrides config `open_browser = false`).
+    #[arg(long, conflicts_with = "no_open")]
+    pub open: bool,
+
+    /// Do not automatically open a browser window on startup.
+    #[arg(long)]
+    pub no_open: bool,
 }
 
 // ============================================================================

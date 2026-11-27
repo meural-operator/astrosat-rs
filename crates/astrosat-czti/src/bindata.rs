@@ -93,9 +93,9 @@ pub enum BinDataOutputType {
 impl BinDataOutputType {
     pub fn parse(s: &str) -> Option<Self> {
         match s.trim().to_ascii_lowercase().as_str() {
-            "spec" => Some(Self::Spec),
-            "lc" => Some(Self::Lc),
-            "both" => Some(Self::Both),
+            "spec" | "spectrum" => Some(Self::Spec),
+            "lc" | "lightcurve" => Some(Self::Lc),
+            "both" | "all" => Some(Self::Both),
             _ => None,
         }
     }

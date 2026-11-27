@@ -9,6 +9,7 @@ pub mod mkf;
 pub mod orbit;
 pub mod tct;
 pub mod time;
+pub mod toml_lite;
 
 pub use bary::{
     barycenter_fits, fk5_to_icrs, source_unit_vector_icrs, BaryCalculator, BaryCorrection,
@@ -30,6 +31,10 @@ pub use time::{
     leap_seconds_since_epoch, mjd_utc_to_astrosat_utc, parse_date_to_mjd, tai_minus_utc_astrosat,
     tai_minus_utc_mjd, tdb_minus_tt, tt_sec_to_astrosat_utc, ASTROSAT_MJDREFF, ASTROSAT_MJDREFI,
     JD_J2000, JD_MINUS_MJD, LEAP_SECONDS_TABLE, SECS_PER_DAY, TT_MINUS_TAI,
+};
+pub use toml_lite::{
+    parse_toml_to_json, to_canonical_toml, toml_quote, AppConfig, BaryFileConfig, CztiFileConfig,
+    LaxpcFileConfig, TimingFileConfig, UiFileConfig,
 };
 
 #[cfg(test)]
