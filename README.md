@@ -49,11 +49,11 @@ cargo build --release -p astrosat-cli
 Launch the full graphical workbench from the same binary — ideal for interactive exploration, teaching, or running over SSH port-forwarding on a remote server:
 
 ```bash
-# Starts AstroSat Studio at http://127.0.0.1:8080/ (Classic UI preserved at /classic)
-astrosat ui --data-dir /path/to/astrosat/data
+# Starts AstroSat Studio at http://127.0.0.1:8080/ using the current directory (Classic UI at /classic)
+astrosat ui
 
-# Headless / custom port
-astrosat ui --host 127.0.0.1 --port 8086 --data-dir /path/to/astrosat/data --no-open
+# Optional: point the file browser & auto-discovery at a specific data folder or custom port
+astrosat ui --data-dir /path/to/astrosat/data --port 8086 --no-open
 ```
 
 > [!TIP]
